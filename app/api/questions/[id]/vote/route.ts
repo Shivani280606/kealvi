@@ -14,16 +14,31 @@ export async function POST(
   const { id } = await params;
 
   if (supabase) {
-    // Atomic `votes = votes + 1` via a SQL function, so concurrent votes
-    // can't clobber each other the way a read-then-write would.
-    const { data, error } = await supabase.rpc("increment_question_votes", {
-      q_id: id,
-    });
+    // NAIVE read-then-write. Looks perfectly reasonable: read the current
+    // count, add one, write it back. The bug: between the read and the write
+    // there's a gap, and two concurrent votes can both read the same value
+    // and both write value+1 — so one vote silently vanishes (a lost update).
+    const { data: current, error: readErr } = await supabase
+      .from("questions")
+      .select("votes")
+      .eq("id", id)
+      .single();
+
+    if (readErr) {
+      return NextResponse.json({ error: readErr.message }, { status: 500 });
+    }
+
+    const { data, error } = await supabase
+      .from("questions")
+      .update({ votes: current.votes + 1 })
+      .eq("id", id)
+      .select("votes")
+      .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ votes: data });
+    return NextResponse.json({ votes: data.votes });
   }
 
   // Fallback: in-memory store.
