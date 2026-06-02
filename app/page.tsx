@@ -1,32 +1,30 @@
-import QuestionsList from "./questions-list";
-import VoteChart from "./VoteChart";
-import { getQuestionsPage } from "@/lib/questions";
-
-// Render on every request (no caching)
-export const dynamic = "force-dynamic";
-
-const PAGE_SIZE = 10;
+import QuestionsList from "@/components/QuestionsList";
 
 export default async function Page() {
-  const { questions, hasMore } = await getQuestionsPage(0, PAGE_SIZE);
+  // wherever you fetch questions from (Supabase / API / etc.)
+  const res = await fetch("http://localhost:3000/api/questions", {
+    cache: "no-store",
+  });
+
+  const data = await res.json();
+
+  // ✅ FIX: normalize data so voters ALWAYS exists
+  const questions = (data.questions ?? []).map((q: any) => ({
+    id: q.id,
+    body: q.body,
+    author: q.author ?? null,
+    votes: q.votes ?? 0,
+    voters: q.voters ?? [], // 🔥 IMPORTANT FIX
+  }));
+
+  const hasMore = data.hasMore ?? false;
 
   return (
-    <main className="mx-auto max-w-2xl p-6 space-y-6">
-      
-      {/* Header */}
-      <h1 className="text-2xl font-medium text-white">
-        Live Q&amp;A
-      </h1>
-
-      {/* 📊 Analytics Chart */}
-      <VoteChart questions={questions} />
-
-      {/* 🧾 Questions List */}
+    <main>
       <QuestionsList
         initialQuestions={questions}
         initialHasMore={hasMore}
       />
-      
     </main>
   );
 }
