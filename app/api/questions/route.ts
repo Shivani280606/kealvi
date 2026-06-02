@@ -6,30 +6,38 @@ const PAGE_SIZE = 10;
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+
     const q = searchParams.get("q")?.trim();
 
-    // 🔍 SEARCH MODE
     if (q) {
-      const questions = (await searchQuestions(q, PAGE_SIZE)) ?? [];
-      return Response.json({ questions, hasMore: false });
+      const questions = await searchQuestions(q, PAGE_SIZE);
+
+      return Response.json({
+        questions,
+        hasMore: false,
+      });
     }
 
-    // 📦 PAGINATION MODE
     const offset = Number(searchParams.get("offset") ?? 0);
 
-    const result = (await getQuestionsPage(offset, PAGE_SIZE)) ?? {
-      questions: [],
-      hasMore: false,
-    };
+    const result = await getQuestionsPage(
+      offset,
+      PAGE_SIZE
+    );
 
     return Response.json({
-      questions: result.questions ?? [],
-      hasMore: result.hasMore ?? false,
+      questions: result.questions,
+      hasMore: result.hasMore,
     });
   } catch (err: any) {
     console.error("GET /questions error:", err);
+
     return Response.json(
-      { questions: [], hasMore: false, error: "Server error" },
+      {
+        questions: [],
+        hasMore: false,
+        error: err.message,
+      },
       { status: 500 }
     );
   }
@@ -53,22 +61,21 @@ export async function POST(req: Request) {
       .insert({
         body,
         author: author ?? null,
-        votes: 0,
-        voters: [],
       })
       .select()
       .single();
 
     if (error) {
-      console.error("Supabase error:", error);
-      return Response.json({ error: error.message }, { status: 500 });
+      return Response.json(
+        { error: error.message },
+        { status: 500 }
+      );
     }
 
     return Response.json(data);
   } catch (err: any) {
-    console.error("POST /questions error:", err);
     return Response.json(
-      { error: "Server crashed" },
+      { error: err.message },
       { status: 500 }
     );
   }

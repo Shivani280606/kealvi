@@ -1,30 +1,48 @@
 import QuestionsList from "@/components/QuestionsList";
 
 export default async function Page() {
-  // wherever you fetch questions from (Supabase / API / etc.)
-  const res = await fetch("http://localhost:3000/api/questions", {
-    cache: "no-store",
-  });
+  try {
+    const res = await fetch("http://localhost:3000/api/questions", {
+      cache: "no-store",
+    });
 
-  const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`API returned ${res.status}`);
+    }
 
-  // ✅ FIX: normalize data so voters ALWAYS exists
-  const questions = (data.questions ?? []).map((q: any) => ({
-    id: q.id,
-    body: q.body,
-    author: q.author ?? null,
-    votes: q.votes ?? 0,
-    voters: q.voters ?? [], // 🔥 IMPORTANT FIX
-  }));
+    const text = await res.text();
 
-  const hasMore = data.hasMore ?? false;
+    const data = text
+      ? JSON.parse(text)
+      : {
+          questions: [],
+          hasMore: false,
+        };
 
-  return (
-    <main>
-      <QuestionsList
-        initialQuestions={questions}
-        initialHasMore={hasMore}
-      />
-    </main>
-  );
+    const questions = (data.questions ?? []).map((q: any) => ({
+      id: q.id,
+      body: q.body,
+      author: q.author ?? null,
+      votes: q.votes ?? 0,
+      voters: q.voters ?? [],
+    }));
+
+    return (
+      <main>
+        <QuestionsList
+          initialQuestions={questions}
+          initialHasMore={data.hasMore ?? false}
+        />
+      </main>
+    );
+  } catch (error) {
+    console.error("PAGE ERROR:", error);
+
+    return (
+      <main className="p-8 text-red-500">
+        <h1>Failed to load questions</h1>
+        <p>Check the server console for details.</p>
+      </main>
+    );
+  }
 }
