@@ -1,19 +1,32 @@
 import QuestionsList from "./questions-list";
+import VoteChart from "./VoteChart";
 import { getQuestionsPage } from "@/lib/questions";
 
-// Render on every request (don't cache/prerender) so new questions show up.
+// Render on every request (no caching)
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 10;
 
-// Server component — runs only on the server, awaits the data, renders to HTML.
 export default async function Page() {
   const { questions, hasMore } = await getQuestionsPage(0, PAGE_SIZE);
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-4 text-2xl font-medium">Live Q&amp;A</h1>
-      <QuestionsList initialQuestions={questions} initialHasMore={hasMore} />
+    <main className="mx-auto max-w-2xl p-6 space-y-6">
+      
+      {/* Header */}
+      <h1 className="text-2xl font-medium text-white">
+        Live Q&amp;A
+      </h1>
+
+      {/* 📊 Analytics Chart */}
+      <VoteChart questions={questions} />
+
+      {/* 🧾 Questions List */}
+      <QuestionsList
+        initialQuestions={questions}
+        initialHasMore={hasMore}
+      />
+      
     </main>
   );
 }

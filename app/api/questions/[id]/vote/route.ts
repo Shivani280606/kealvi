@@ -1,26 +1,23 @@
-import { supabase } from "@/lib/supabase";
+import { questions } from "@/lib/questionsStore";
 
-// We don't check-then-insert (that has a time-of-check-to-time-of-use race).
-// We just try to insert and let the unique(question_id, voter_id) constraint
-// be the referee — it's enforced atomically as part of the insert.
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id: questionId } = await params;
+export async function POST(req: Request, { params }: any) {
   const { voterId } = await req.json();
+  const { id } = params;
 
-  const { error } = await supabase
-    .from("votes")
-    .insert({ question_id: questionId, voter_id: voterId });
+  const question = questions.find((q) => q.id === id);
 
-  if (error) {
-    if (error.code === "23505") {
-      // Postgres unique violation → this voter already voted on this question.
-      return Response.json({ error: "already voted" }, { status: 409 });
-    }
-    return Response.json({ error: error.message }, { status: 500 });
+  if (!question) {
+    return Response.json({ error: "Not found" }, { status: 404 });
   }
 
-  return Response.json({ ok: true });
+  // prevent double voting
+  if (!question.voters.includes(voterId)) {
+    question.voters.push(voterId);
+    question.votes += 1;
+  }
+
+  return Response.json({
+    votes: question.votes,
+    voters: question.voters,
+  });
 }
