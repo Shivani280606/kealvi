@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getVoterId } from "@/lib/voter";
 
 type Question = {
   id: string;
   body: string;
   author: string | null;
   votes: number;
-  voters: string[];
 };
 
 export default function QuestionsList({
@@ -25,11 +23,8 @@ export default function QuestionsList({
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  const [voterId, setVoterId] = useState("");
-
   useEffect(() => {
     setHydrated(true);
-    setVoterId(getVoterId());
   }, []);
 
   const totalVotes = questions.reduce(
@@ -73,7 +68,6 @@ export default function QuestionsList({
       {
         ...created,
         votes: 0,
-        voters: [],
       },
       ...qs,
     ]);
@@ -81,21 +75,16 @@ export default function QuestionsList({
     setDraft("");
   }
 
+  // TEMPORARY vote handler
   async function upvote(id: string) {
     const res = await fetch(`/api/questions/${id}/vote`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        voterId,
-      }),
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.error || "Something went wrong");
+      alert(data.error || "Voting not configured yet");
       return;
     }
 
@@ -105,7 +94,6 @@ export default function QuestionsList({
           ? {
               ...q,
               votes: data.votes,
-              voters: data.voters ?? [],
             }
           : q
       )
@@ -146,7 +134,7 @@ export default function QuestionsList({
 
         <button
           onClick={submit}
-          className="rounded-md border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10"
+          className="rounded-md border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 transition"
         >
           Ask
         </button>
@@ -168,47 +156,36 @@ export default function QuestionsList({
               ? ((q.votes / totalVotes) * 100).toFixed(1)
               : "0";
 
-          const myVote =
-            voterId &&
-            (q.voters ?? []).includes(voterId);
-
           return (
             <li
               key={q.id}
-              className="rounded-xl border border-white/10 bg-white/5 p-4"
+              className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-4 shadow-lg hover:bg-white/10 transition"
             >
               <div className="flex items-start gap-3">
                 <button
                   onClick={() => upvote(q.id)}
-                  className={`rounded-md border px-3 py-1 font-mono transition ${
-                    myVote
-                      ? "bg-blue-500 text-white"
-                      : "bg-white/10 hover:bg-white/20"
-                  }`}
+                  className="rounded-md border border-white/10 bg-white/10 px-3 py-1 font-mono hover:bg-white/20 transition"
                 >
                   ▲ {q.votes}
                 </button>
 
                 <div className="flex-1">
-                  <p className="text-white">
+                  <p className="text-white font-medium">
                     {q.body}
                   </p>
 
-                  <div className="mt-2">
-                    <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 transition-all duration-500"
-                        style={{
-                          width: `${percent}%`,
-                        }}
-                      />
-                    </div>
+                  {/* Animated vote bar */}
+                  <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-blue-500 transition-all duration-700"
+                      style={{
+                        width: `${percent}%`,
+                      }}
+                    />
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-400">
-                    <span>
-                      {percent}% of total votes
-                    </span>
+                    <span>{percent}% of total votes</span>
 
                     <span>
                       {q.votes === 0
@@ -217,12 +194,6 @@ export default function QuestionsList({
                             q.votes === 1 ? "" : "s"
                           }`}
                     </span>
-
-                    {myVote && (
-                      <span className="text-blue-400">
-                        ✓ You voted
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -231,11 +202,12 @@ export default function QuestionsList({
         })}
       </ul>
 
+      {/* Load More */}
       {hasMore && (
         <button
           onClick={loadMore}
           disabled={loading}
-          className="rounded-md border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 disabled:opacity-50"
+          className="rounded-md border border-white/10 bg-white/5 px-4 py-2 hover:bg-white/10 disabled:opacity-50 transition"
         >
           {loading ? "Loading..." : "Load More"}
         </button>
