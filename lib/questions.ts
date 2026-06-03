@@ -14,7 +14,7 @@ export async function getQuestionsPage(
       votes(count)
     `)
     .order("created_at", { ascending: false })
-    .range(offset, offset + limit);
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
 
@@ -23,12 +23,11 @@ export async function getQuestionsPage(
     body: q.body,
     author: q.author,
     votes: q.votes?.[0]?.count ?? 0,
-    voters: [],
   }));
 
   return {
-    questions: rows.slice(0, limit),
-    hasMore: rows.length > limit,
+    questions: rows,
+    hasMore: rows.length === limit,
   };
 }
 
@@ -58,6 +57,5 @@ export async function searchQuestions(
     body: row.body,
     author: row.author,
     votes: row.votes?.[0]?.count ?? 0,
-    voters: [],
   }));
 }

@@ -1,44 +1,41 @@
-import { supabase } from "@/lib/supabase";
+import { NextResponse } from "next/server";
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// ⚠️ Replace this with your real DB later
+import { questions } from "@/lib/questionsStore";
+
+export async function POST(req, { params }) {
   const { voterId } = await req.json();
-  const { id } = await params;
+  const id = params.id;
 
-  const { error } = await supabase
-    .from("votes")
-    .insert({
-      question_id: id,
-      voter_id: voterId,
-    });
+  const question = questions.find((q) => q.id === id);
 
-  if (error) {
-    // duplicate vote
-    if (error.code === "23505") {
-      const { count } = await supabase
-        .from("votes")
-        .select("*", { count: "exact", head: true })
-        .eq("question_id", id);
-
-      return Response.json({
-        votes: count ?? 0,
-      });
-    }
-
-    return Response.json(
-      { error: error.message },
-      { status: 500 }
+  if (!question) {
+    return NextResponse.json(
+      { error: "Question not found" },
+      { status: 404 }
     );
   }
 
-  const { count } = await supabase
-    .from("votes")
-    .select("*", { count: "exact", head: true })
-    .eq("question_id", id);
+  if (!question.voters) {
+    question.voters = [];
+  }
 
-  return Response.json({
-    votes: count ?? 0,
+  let action = "removed";
+
+  // 🟡 TOGGLE LOGIC (important)
+  if (question.voters.includes(voterId)) {
+    question.voters = question.voters.filter((v) => v !== voterId);
+    question.votes = Math.max(0, question.votes - 1);
+    action = "removed";
+  } else {
+    question.voters.push(voterId);
+    question.votes += 1;
+    action = "added";
+  }
+
+  return NextResponse.json({
+    action,
+    votes: question.votes,
+    voters: question.voters,
   });
 }

@@ -1,48 +1,32 @@
-import QuestionsList from "@/components/QuestionsList";
+import QuestionsList from "./questions-list";
+import VoteChart from "./VoteChart";
+import { getQuestionsPage } from "@/lib/questions";
+
+// Render on every request (no caching)
+export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 10;
 
 export default async function Page() {
-  try {
-    const res = await fetch("http://localhost:3000/api/questions", {
-      cache: "no-store",
-    });
+  const { questions, hasMore } = await getQuestionsPage(0, PAGE_SIZE);
 
-    if (!res.ok) {
-      throw new Error(`API returned ${res.status}`);
-    }
+  return (
+    <main className="mx-auto max-w-2xl p-6 space-y-6">
+      
+      {/* Header */}
+      <h1 className="text-2xl font-medium text-white">
+        Live Q&amp;A
+      </h1>
 
-    const text = await res.text();
+      {/* 📊 Analytics Chart */}
+      <VoteChart questions={questions} />
 
-    const data = text
-      ? JSON.parse(text)
-      : {
-          questions: [],
-          hasMore: false,
-        };
-
-    const questions = (data.questions ?? []).map((q: any) => ({
-      id: q.id,
-      body: q.body,
-      author: q.author ?? null,
-      votes: q.votes ?? 0,
-      voters: q.voters ?? [],
-    }));
-
-    return (
-      <main>
-        <QuestionsList
-          initialQuestions={questions}
-          initialHasMore={data.hasMore ?? false}
-        />
-      </main>
-    );
-  } catch (error) {
-    console.error("PAGE ERROR:", error);
-
-    return (
-      <main className="p-8 text-red-500">
-        <h1>Failed to load questions</h1>
-        <p>Check the server console for details.</p>
-      </main>
-    );
-  }
+      {/* 🧾 Questions List */}
+      <QuestionsList
+        initialQuestions={questions}
+        initialHasMore={hasMore}
+      />
+      
+    </main>
+  );
 }

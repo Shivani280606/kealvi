@@ -39,31 +39,80 @@ export default function QuestionsList({
   const totalVotes = questions.reduce((sum, q) => sum + q.votes, 0);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
+  const interval = setInterval(async () => {
+    try {
       const res = await fetch("/api/questions");
-      const data = await res.json();
-      setQuestions(data.questions);
-      setHasMore(data.hasMore);
-    }, 1200);
 
-    return () => clearInterval(interval);
-  }, []);
+      if (!res.ok) {
+        console.error(
+          "Polling API Error:",
+          res.status,
+          res.statusText
+        );
+        return;
+      }
+
+      const data = await res.json();
+
+      const normalizedQuestions = (data.questions ?? []).map(
+        (q: any) => ({
+          id: q.id,
+          body: q.body,
+          author: q.author ?? null,
+          votes: q.votes ?? 0,
+          voters: q.voters ?? [],
+        })
+      );
+
+      setQuestions(normalizedQuestions);
+      setHasMore(data.hasMore ?? false);
+    } catch (err) {
+      console.error("Polling failed:", err);
+    }
+  }, 1200);
+
+  return () => clearInterval(interval);
+}, []);
 
   useEffect(() => {
-    const id = setTimeout(async () => {
+  const timeout = setTimeout(async () => {
+    try {
       const url = query
         ? `/api/questions?q=${encodeURIComponent(query)}`
-        : `/api/questions`;
+        : "/api/questions";
 
       const res = await fetch(url);
+
+      if (!res.ok) {
+        console.error(
+          "Search API Error:",
+          res.status,
+          res.statusText
+        );
+        return;
+      }
+
       const data = await res.json();
 
-      setQuestions(data.questions);
-      setHasMore(data.hasMore);
-    }, 300);
+      const normalizedQuestions = (data.questions ?? []).map(
+        (q: any) => ({
+          id: q.id,
+          body: q.body,
+          author: q.author ?? null,
+          votes: q.votes ?? 0,
+          voters: q.voters ?? [],
+        })
+      );z
 
-    return () => clearTimeout(id);
-  }, [query]);
+      setQuestions(normalizedQuestions);
+      setHasMore(data.hasMore ?? false);
+    } catch (err) {
+      console.error("Search failed:", err);
+    }
+  }, 300);
+
+  return () => clearTimeout(timeout);
+}, [query]);
 
   async function submit() {
     if (!draft.trim()) return;
