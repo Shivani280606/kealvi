@@ -1,7 +1,6 @@
 export function getVoterId(): string {
   if (typeof window === "undefined") {
-    // server-safe fallback (temporary)
-    return "server";
+    return "";
   }
 
   let id = localStorage.getItem("voter_id");
