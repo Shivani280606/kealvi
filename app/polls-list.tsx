@@ -3,24 +3,32 @@
 import { useState } from "react";
 import { getVoterId } from "@/lib/voter";
 
+type PollOption = {
+  id: string;
+  option_text: string;
+  votes?: number;
+};
+
+type Poll = {
+  id: string;
+  body: string;
+  poll_options: PollOption[];
+};
+
 export default function PollsList({
   initialPolls,
 }: {
-  initialPolls: any[];
+  initialPolls: Poll[];
   initialHasMore: boolean;
 }) {
-  const [question, setQuestion] =
-    useState("");
-
-  const [options, setOptions] =
-    useState(["", ""]);
-
-  const [loading, setLoading] =
-    useState(false);
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState(["", ""]);
+  const [loading, setLoading] = useState(false);
 
   async function createPoll() {
-    const cleanOptions =
-      options.filter((o) => o.trim());
+    const cleanOptions = options.filter((o) =>
+      o.trim()
+    );
 
     if (!question.trim()) {
       alert("Enter a question");
@@ -52,12 +60,11 @@ export default function PollsList({
         }
       );
 
-      const data =
-        await res.json();
+      const data = await res.json();
 
       if (!res.ok) {
         alert(
-          data.error ||
+          data.error ??
             "Failed creating poll"
         );
         return;
@@ -66,7 +73,6 @@ export default function PollsList({
       location.reload();
     } catch (error) {
       console.error(error);
-
       alert(
         "Unexpected create poll error"
       );
@@ -90,8 +96,94 @@ export default function PollsList({
           },
           body: JSON.stringify({
             optionId,
-            voterId:
-              getVoterId(),
+            voterId: getVoterId(),
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(
+          data.error ??
+            "Vote failed"
+        );
+        return;
+      }
+
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(
+        "Unexpected vote error"
+      );
+    }
+  }
+
+  async function deletePoll(
+    pollId: string
+  ) {
+    const confirmed = confirm(
+      "Delete this poll?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        `/api/polls/${pollId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+        alert(
+          data.error ??
+            "Delete failed"
+        );
+        return;
+      }
+
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(
+        "Unexpected delete error"
+      );
+    }
+  }
+
+  async function editPoll(
+    pollId: string,
+    currentBody: string
+  ) {
+    const updated = prompt(
+      "Edit poll topic",
+      currentBody
+    );
+
+    if (
+      !updated ||
+      !updated.trim()
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/polls/${pollId}/edit`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            body: updated,
           }),
         }
       );
@@ -101,8 +193,8 @@ export default function PollsList({
 
       if (!res.ok) {
         alert(
-          data.error ||
-            "Vote failed"
+          data.error ??
+            "Update failed"
         );
         return;
       }
@@ -110,9 +202,8 @@ export default function PollsList({
       location.reload();
     } catch (error) {
       console.error(error);
-
       alert(
-        "Unexpected vote error"
+        "Unexpected update error"
       );
     }
   }
@@ -188,13 +279,10 @@ export default function PollsList({
       {/* POLLS */}
 
       {initialPolls.map(
-        (poll: any) => {
+        (poll) => {
           const totalVotes =
             poll.poll_options.reduce(
-              (
-                sum: number,
-                option: any
-              ) =>
+              (sum, option) =>
                 sum +
                 (option.votes ?? 0),
               0
@@ -205,17 +293,43 @@ export default function PollsList({
               key={poll.id}
               className="rounded-xl border border-white/10 bg-white/5 p-5"
             >
-              <h3 className="mb-4 text-lg font-medium">
-                {poll.body}
-              </h3>
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-medium">
+                  {poll.body}
+                </h3>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      editPoll(
+                        poll.id,
+                        poll.body
+                      )
+                    }
+                    className="rounded border border-blue-500 px-2 py-1 text-sm text-blue-400"
+                  >
+                    ✏️ Edit
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      deletePoll(
+                        poll.id
+                      )
+                    }
+                    className="rounded border border-red-500 px-2 py-1 text-sm text-red-400"
+                  >
+                    🗑 Delete
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-3">
                 {poll.poll_options.map(
-                  (
-                    option: any
-                  ) => {
+                  (option) => {
                     const votes =
-                      option.votes ?? 0;
+                      option.votes ??
+                      0;
 
                     const percent =
                       totalVotes > 0

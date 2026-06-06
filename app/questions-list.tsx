@@ -198,10 +198,15 @@ export default function QuestionsList({
   );
 
   const sortedQuestions = [...questions].sort(
-    (a, b) =>
-      Number(b.is_featured) -
-      Number(a.is_featured)
-  );
+  (a, b) =>
+    Number(b.is_featured) -
+    Number(a.is_featured)
+);
+
+const featuredCount =
+  questions.filter(
+    (q) => q.is_featured
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -241,7 +246,16 @@ export default function QuestionsList({
       />
 
       {/* Questions */}
-      <ul className="space-y-3">
+      {/* Questions */}
+
+{featuredCount >= 3 && (
+  <div className="rounded-md border border-yellow-500 bg-yellow-500/10 p-3 text-sm text-yellow-300">
+    Maximum 3 featured questions reached.
+    Unpin a question to feature another.
+  </div>
+)}
+
+<ul className="space-y-3">
         {sortedQuestions.map((q) => {
           const percentage =
             totalVotes > 0
@@ -275,18 +289,29 @@ export default function QuestionsList({
     )}
 
     <button
-      onClick={() =>
-        toggleFeatured(
-          q.id,
-          !!q.is_featured
-        )
-      }
-      className="rounded border border-yellow-500 px-2 py-1 text-xs text-yellow-400 hover:bg-yellow-500/10"
-    >
-      {q.is_featured
-        ? "📌 Unpin"
-        : "📍 Pin"}
-    </button>
+  onClick={() =>
+    toggleFeatured(
+      q.id,
+      !!q.is_featured
+    )
+  }
+  disabled={
+    !q.is_featured &&
+    featuredCount >= 3
+  }
+  className={`rounded px-2 py-1 text-xs transition ${
+    !q.is_featured &&
+    featuredCount >= 3
+      ? "cursor-not-allowed border border-gray-600 text-gray-500"
+      : "border border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
+  }`}
+>
+  {q.is_featured
+    ? "📌 Unpin"
+    : featuredCount >= 3
+    ? "Limit Reached"
+    : "📍 Pin"}
+</button>
   </div>
 
   <p className="text-white">
