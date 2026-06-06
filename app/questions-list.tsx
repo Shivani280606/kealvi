@@ -8,6 +8,7 @@ type Question = {
   body: string;
   author: string | null;
   votes: number;
+  is_featured?: boolean;
 };
 
 export default function QuestionsList({
@@ -32,7 +33,6 @@ export default function QuestionsList({
     setHydrated(true);
   }, []);
 
-  // Search
   useEffect(() => {
     const timeout = setTimeout(async () => {
       try {
@@ -58,7 +58,6 @@ export default function QuestionsList({
     return () => clearTimeout(timeout);
   }, [query]);
 
-  // Submit question
   async function submit() {
     if (!draft.trim()) return;
 
@@ -85,6 +84,7 @@ export default function QuestionsList({
         {
           ...created,
           votes: 0,
+          is_featured: false,
         },
         ...qs,
       ]);
@@ -95,7 +95,6 @@ export default function QuestionsList({
     }
   }
 
-  // Vote
   async function upvote(id: string) {
     try {
       const res = await fetch(
@@ -134,7 +133,44 @@ export default function QuestionsList({
     }
   }
 
-  // Load More
+  async function toggleFeatured(
+  id: string,
+  current: boolean
+) {
+  try {
+    const res = await fetch(
+      `/api/questions/${id}/feature`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          featured: !current,
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      alert("Failed to update featured status");
+      return;
+    }
+
+    setQuestions((qs) =>
+      qs.map((q) =>
+        q.id === id
+          ? {
+              ...q,
+              is_featured: !current,
+            }
+          : q
+      )
+    );
+  } catch (err) {
+    console.error(err);
+  }
+}
+
   async function loadMore() {
     try {
       setLoading(true);
@@ -159,6 +195,12 @@ export default function QuestionsList({
   const totalVotes = questions.reduce(
     (sum, q) => sum + q.votes,
     0
+  );
+
+  const sortedQuestions = [...questions].sort(
+    (a, b) =>
+      Number(b.is_featured) -
+      Number(a.is_featured)
   );
 
   return (
@@ -200,7 +242,7 @@ export default function QuestionsList({
 
       {/* Questions */}
       <ul className="space-y-3">
-        {questions.map((q) => {
+        {sortedQuestions.map((q) => {
           const percentage =
             totalVotes > 0
               ? (
@@ -224,10 +266,32 @@ export default function QuestionsList({
                   ▲ {q.votes}
                 </button>
 
-                <div className="flex-1">
-                  <p className="text-white">
-                    {q.body}
-                  </p>
+<div className="flex-1">
+  <div className="mb-2 flex items-center gap-2">
+    {q.is_featured && (
+      <span className="rounded bg-yellow-500 px-2 py-1 text-xs font-bold text-black">
+        📌 Featured Question
+      </span>
+    )}
+
+    <button
+      onClick={() =>
+        toggleFeatured(
+          q.id,
+          !!q.is_featured
+        )
+      }
+      className="rounded border border-yellow-500 px-2 py-1 text-xs text-yellow-400 hover:bg-yellow-500/10"
+    >
+      {q.is_featured
+        ? "📌 Unpin"
+        : "📍 Pin"}
+    </button>
+  </div>
+
+  <p className="text-white">
+    {q.body}
+  </p>
 
                   {q.author && (
                     <p className="mt-1 text-xs text-gray-500">
@@ -235,7 +299,6 @@ export default function QuestionsList({
                     </p>
                   )}
 
-                  {/* Animated Vote Bar */}
                   <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-white/10">
                     <div
                       className="h-full rounded-full bg-blue-500 transition-all duration-700"
@@ -265,7 +328,6 @@ export default function QuestionsList({
         })}
       </ul>
 
-      {/* Load More */}
       {hasMore && (
         <button
           onClick={loadMore}

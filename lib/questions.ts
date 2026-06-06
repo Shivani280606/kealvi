@@ -11,9 +11,15 @@ export async function getQuestionsPage(
       body,
       author,
       created_at,
+      is_featured,
       votes(count)
     `)
-    .order("created_at", { ascending: false })
+    .order("is_featured", {
+      ascending: false,
+    })
+    .order("created_at", {
+      ascending: false,
+    })
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
@@ -22,6 +28,7 @@ export async function getQuestionsPage(
     id: q.id,
     body: q.body,
     author: q.author,
+    is_featured: q.is_featured,
     votes: q.votes?.[0]?.count ?? 0,
   }));
 
@@ -42,6 +49,7 @@ export async function searchQuestions(
       body,
       author,
       created_at,
+      is_featured,
       votes(count)
     `)
     .textSearch("body", q, {
@@ -56,6 +64,7 @@ export async function searchQuestions(
     id: row.id,
     body: row.body,
     author: row.author,
+    is_featured: row.is_featured,
     votes: row.votes?.[0]?.count ?? 0,
   }));
 }
