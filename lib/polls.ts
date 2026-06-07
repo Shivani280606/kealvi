@@ -30,7 +30,6 @@ export async function getPollsPage(
     };
   }
 
-  // Get all votes
   const { data: votes } = await supabase
     .from("poll_votes")
     .select("option_id");
@@ -58,4 +57,18 @@ export async function getPollsPage(
     hasMore:
       (polls?.length ?? 0) === limit,
   };
+}
+
+export async function getPollVoteCount() {
+  const { count, error } =
+    await supabase
+      .from("poll_votes")
+      .select("*", {
+        count: "exact",
+        head: true,
+      });
+
+  if (error) throw error;
+
+  return count ?? 0;
 }

@@ -1,14 +1,16 @@
 type Props = {
   totalQuestions: number;
-  totalVotes: number;
+  totalQuestionVotes: number;
   totalPolls: number;
+  totalPollVotes: number;
   featuredQuestions: number;
 };
 
 export default function ExecutiveSummary({
   totalQuestions,
-  totalVotes,
+  totalQuestionVotes,
   totalPolls,
+  totalPollVotes,
   featuredQuestions,
 }: Props) {
   const cards = [
@@ -18,14 +20,19 @@ export default function ExecutiveSummary({
       icon: "❓",
     },
     {
-      title: "Votes",
-      value: totalVotes,
+      title: "Question Votes",
+      value: totalQuestionVotes,
       icon: "👍",
     },
     {
       title: "Polls",
       value: totalPolls,
       icon: "📊",
+    },
+    {
+      title: "Poll Votes",
+      value: totalPollVotes,
+      icon: "🗳️",
     },
     {
       title: "Featured",
@@ -35,7 +42,7 @@ export default function ExecutiveSummary({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       {cards.map((card) => (
         <div
           key={card.title}

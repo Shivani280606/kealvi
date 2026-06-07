@@ -6,7 +6,10 @@ import {
   getQuestionCount,
 } from "@/lib/questions";
 
-import { getPollsPage } from "@/lib/polls";
+import {
+  getPollsPage,
+  getPollVoteCount,
+} from "@/lib/polls";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +31,7 @@ export default async function Page() {
   const totalQuestions =
     await getQuestionCount();
 
-  const totalVotes =
+  const totalQuestionVotes =
     questions.reduce(
       (sum, q) => sum + q.votes,
       0
@@ -36,6 +39,9 @@ export default async function Page() {
 
   const totalPolls =
     polls.length;
+
+  const totalPollVotes =
+    await getPollVoteCount();
 
   const featuredQuestions =
     questions.filter(
@@ -53,11 +59,14 @@ export default async function Page() {
         totalQuestions={
           totalQuestions
         }
-        totalVotes={
-          totalVotes
+        totalQuestionVotes={
+          totalQuestionVotes
         }
         totalPolls={
           totalPolls
+        }
+        totalPollVotes={
+          totalPollVotes
         }
         featuredQuestions={
           featuredQuestions
