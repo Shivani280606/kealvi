@@ -1,9 +1,12 @@
 import { supabase } from "@/lib/supabase";
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function getPollsPage(
   offset: number,
   limit: number
 ) {
+  noStore();
+
   const { data: polls, error } = await supabase
     .from("polls")
     .select(`
@@ -36,28 +39,31 @@ export async function getPollsPage(
 
   const voteCounts: Record<string, number> = {};
 
-  (votes ?? []).forEach((vote) => {
-    voteCounts[vote.option_id] =
-      (voteCounts[vote.option_id] ?? 0) + 1;
+  (votes ?? []).forEach((vote: any) => {
+    const key = String(
+      vote.option_id
+    );
+
+    voteCounts[key] =
+      (voteCounts[key] ?? 0) + 1;
   });
 
-  const pollsWithVotes = polls.map((poll: any) => ({
-    ...poll,
-    poll_options: poll.poll_options.map(
-      (option: any) => ({
-        ...option,
-        votes:
-          voteCounts[option.id] ?? 0,
-      })
-    ),
-  }));
+  const pollsWithVotes = polls.map(
+    (poll: any) => ({
+      ...poll,
+      poll_options:
+        poll.poll_options.map(
+          (option: any) => ({
+            ...option,
+            votes:
+              voteCounts[
+                String(option.id)
+              ] ?? 0,
+          })
+        ),
+    })
+  );
 
-  console.log("VOTES:", voteCounts);
-console.log(
-  "POLLS:",
-  JSON.stringify(pollsWithVotes, null, 2)
-);
-  
   return {
     polls: pollsWithVotes,
     hasMore:
@@ -66,6 +72,8 @@ console.log(
 }
 
 export async function getPollVoteCount() {
+  noStore();
+
   const { count, error } =
     await supabase
       .from("poll_votes")

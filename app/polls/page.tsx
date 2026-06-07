@@ -1,6 +1,8 @@
 import PollsList from "../polls-list";
 import { getPollsPage } from "@/lib/polls";
 
+export const dynamic = "force-dynamic";
+
 export default async function PollsPage() {
   const data = await getPollsPage(
     0,
