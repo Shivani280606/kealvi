@@ -1,6 +1,4 @@
-import QuestionsList from "./questions-list";
-import PollsList from "./polls-list";
-import VoteChart from "./VoteChart";
+import Link from "next/link";
 import ExecutiveSummary from "./ExecutiveSummary";
 
 import { getQuestionsPage } from "@/lib/questions";
@@ -11,23 +9,18 @@ export const dynamic = "force-dynamic";
 const PAGE_SIZE = 10;
 
 export default async function Page() {
-  const {
-    questions,
-    hasMore: questionsHasMore,
-  } = await getQuestionsPage(
-    0,
-    PAGE_SIZE
-  );
+  const { questions } =
+    await getQuestionsPage(
+      0,
+      PAGE_SIZE
+    );
 
-  const {
-    polls,
-    hasMore: pollsHasMore,
-  } = await getPollsPage(
-    0,
-    PAGE_SIZE
-  );
+  const { polls } =
+    await getPollsPage(
+      0,
+      PAGE_SIZE
+    );
 
-  // Executive Summary Metrics
   const totalQuestions =
     questions.length;
 
@@ -46,68 +39,122 @@ export default async function Page() {
     ).length;
 
   return (
-    <main className="mx-auto max-w-3xl p-6 space-y-10">
+    <main className="mx-auto max-w-5xl p-6">
 
-      {/* Executive Summary Dashboard */}
+      <h1 className="mb-8 text-4xl font-bold">
+        Kealvi Dashboard
+      </h1>
 
-      <section>
-        <h1 className="mb-6 text-3xl font-bold">
-          Executive Summary Dashboard
-        </h1>
+      <ExecutiveSummary
+        totalQuestions={
+          totalQuestions
+        }
+        totalVotes={
+          totalVotes
+        }
+        totalPolls={
+          totalPolls
+        }
+        featuredQuestions={
+          featuredQuestions
+        }
+      />
 
-        <ExecutiveSummary
-          totalQuestions={
-            totalQuestions
-          }
-          totalVotes={
-            totalVotes
-          }
-          totalPolls={
-            totalPolls
-          }
-          featuredQuestions={
-            featuredQuestions
-          }
-        />
-      </section>
+      <section className="mt-10">
+        <h2 className="mb-6 text-2xl font-semibold">
+          Explore
+        </h2>
 
-      {/* Q&A SECTION */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      <section>
-        <h1 className="mb-6 text-3xl font-bold">
-          Live Q&A
-        </h1>
+          <Link
+            href="/summary"
+            className="rounded-xl border bg-white p-8 shadow hover:shadow-lg transition"
+          >
+            <div className="text-5xl mb-4">
+              📊
+            </div>
 
-        <VoteChart
-          questions={questions}
-        />
+            <h3 className="text-xl font-bold">
+              Summary
+            </h3>
 
-        <div className="mt-6">
-          <QuestionsList
-            initialQuestions={
-              questions
-            }
-            initialHasMore={
-              questionsHasMore
-            }
-          />
+            <p className="mt-2 text-gray-600">
+              Executive overview of all activity.
+            </p>
+          </Link>
+
+          <Link
+            href="/questions"
+            className="rounded-xl border bg-white p-8 shadow hover:shadow-lg transition"
+          >
+            <div className="text-5xl mb-4">
+              ❓
+            </div>
+
+            <h3 className="text-xl font-bold">
+              Questions
+            </h3>
+
+            <p className="mt-2 text-gray-600">
+              Browse and vote on questions.
+            </p>
+          </Link>
+
+          <Link
+            href="/polls"
+            className="rounded-xl border bg-white p-8 shadow hover:shadow-lg transition"
+          >
+            <div className="text-5xl mb-4">
+              🗳️
+            </div>
+
+            <h3 className="text-xl font-bold">
+              Polls
+            </h3>
+
+            <p className="mt-2 text-gray-600">
+              Participate in live polls.
+            </p>
+          </Link>
+
+          <Link
+            href="/analytics"
+            className="rounded-xl border bg-white p-8 shadow hover:shadow-lg transition"
+          >
+            <div className="text-5xl mb-4">
+              📈
+            </div>
+
+            <h3 className="text-xl font-bold">
+              Analytics
+            </h3>
+
+            <p className="mt-2 text-gray-600">
+              Charts and voting insights.
+            </p>
+          </Link>
+
+          <Link
+            href="/leaderboard"
+            className="rounded-xl border bg-white p-8 shadow hover:shadow-lg transition"
+          >
+            <div className="text-5xl mb-4">
+              🏆
+            </div>
+
+            <h3 className="text-xl font-bold">
+              Leaderboard
+            </h3>
+
+            <p className="mt-2 text-gray-600">
+              Top voted questions and rankings.
+            </p>
+          </Link>
+
         </div>
       </section>
 
-      {/* POLLS SECTION */}
-
-      <section>
-        <h2 className="mb-6 text-3xl font-bold">
-          Live Polls
-        </h2>
-
-        <PollsList
-          initialPolls={polls}
-          initialHasMore={
-            pollsHasMore
-          }
-        />
-      </section>
     </main>
   );
 }
