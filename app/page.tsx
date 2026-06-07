@@ -1,7 +1,11 @@
 import Link from "next/link";
 import ExecutiveSummary from "./ExecutiveSummary";
 
-import { getQuestionsPage } from "@/lib/questions";
+import {
+  getQuestionsPage,
+  getQuestionCount,
+} from "@/lib/questions";
+
 import { getPollsPage } from "@/lib/polls";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +26,7 @@ export default async function Page() {
     );
 
   const totalQuestions =
-    questions.length;
+    await getQuestionCount();
 
   const totalVotes =
     questions.reduce(
@@ -61,6 +65,7 @@ export default async function Page() {
       />
 
       <section className="mt-10">
+
         <h2 className="mb-6 text-2xl font-semibold">
           Explore
         </h2>
@@ -153,6 +158,7 @@ export default async function Page() {
           </Link>
 
         </div>
+
       </section>
 
     </main>

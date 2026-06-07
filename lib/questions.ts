@@ -38,6 +38,20 @@ export async function getQuestionsPage(
   };
 }
 
+export async function getQuestionCount() {
+  const { count, error } =
+    await supabase
+      .from("questions")
+      .select("*", {
+        count: "exact",
+        head: true,
+      });
+
+  if (error) throw error;
+
+  return count ?? 0;
+}
+
 export async function searchQuestions(
   q: string,
   limit: number
