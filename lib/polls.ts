@@ -52,6 +52,12 @@ export async function getPollsPage(
     ),
   }));
 
+  console.log("VOTES:", voteCounts);
+console.log(
+  "POLLS:",
+  JSON.stringify(pollsWithVotes, null, 2)
+);
+  
   return {
     polls: pollsWithVotes,
     hasMore:
